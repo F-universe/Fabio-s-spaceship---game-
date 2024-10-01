@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navicella che si muove e sassi cadenti</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            overflow: hidden;
+            background-image: url('spazio2.webp'); /* Aggiunta dell'immagine di sfondo */
+            background-size: cover;
+            background-position: center;
+        }
+
+        .container {
+            width: 90vw;
+            height: 90vh;
+            position: relative;
+        }
+
+        .spaceship {
+            width: 90px;
+            height: 90px;
+            background-image: url('navicella.png'); /* Aggiunta dell'immagine della navicella */
+            background-size: cover;
+            position: absolute;
+            top: 95%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .rock {
+            width: 50px;
+            height: 50px;
+            background-image: url('sasso.png'); /* Aggiunta dell'immagine del sasso */
+            background-size: cover;
+            position: absolute;
+            top: 0;
+        }
+
+        .special-rock {
+            width: 50px;
+            height: 108px; /* Adjusted to fit the provided image */
+            background-image: url('sasso2.png'); /* Aggiunta dell'immagine del sasso speciale */
+            background-size: contain;
+            background-repeat: no-repeat;
+            position: absolute;
+            top: 0;
+        }
+
+        .bonus-rock {
+            width: 50px;
+            height: 50px;
+            background-image: url('buono.png'); /* Aggiunta dell'immagine del buono */
+            background-size: cover;
+            position: absolute;
+            top: 0;
+        }
+
+        .heart {
+            width: 50px;
+            height: 50px;
+            background-image: url('cuore.png'); /* Aggiunta dell'immagine del cuore */
+            background-size: cover;
+            position: absolute;
+            top: 0;
+        }
+
+        .trio-rock {
+            width: 50px;
+            height: 50px;
+            background-image: url('sasso3.png'); /* Aggiunta dell'immagine del sasso3 */
+            background-size: cover;
+            position: absolute;
+            top: 0;
+        }
+
+        #gameOverMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: red;
+            display: none;
+            text-align: center; /* Center text */
+        }
+
+        #livesContainer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        #pointsContainer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: Arial, sans-serif;
+        }
+
+        #points {
+            background-color: #ffc107;
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .heart-icon {
+            width: 30px;
+            height: auto;
+            margin-left: 5px;
+        }
+
+        #timerContainer {
+            position: absolute;
+            top: 10px;
+            right: 50%;
+            transform: translateX(50%);
+            font-family: Arial, sans-serif;
+        }
+
+        #timer {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        #speedButton, #playButton, #restartButton {
+            position: absolute;
+            bottom: 10px;
+            right: 50%;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateX(50%);
+        }
+
+        #speedButton {
+            right: 10px;
+            transform: none;
+        }
+
+        #restartButton {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="spaceship" class="spaceship"></div>
+        <div id="gameOverMessage">Hai perso</div>
+    </div>
+    <div id="livesContainer">
+        <svg class="heart-icon" viewBox="0 0 32 29.6">
+            <path fill="red" d="M16 28.8c-0.5 0-1-0.2-1.4-0.6l-12.6-12.6c-0.8-0.8-2.1-0.8-2.9 0s-0.8 2.1 0 2.9l11.3 11.3 11.3-11.3c0.8-0.8 0.8-2.1 0-2.9s-2.1-0.8-2.9 0l-12.6 12.6c-0.4 0.4-0.9 0.6-1.4 0.6z"/>
+        </svg>
+        <span id="lifeCount">3</span>
+    </div>
+    <div id="pointsContainer">
+        <span id="points">0</span>
+    </div>
+    <div id="timerContainer">
+        <span id="timer">0</span>
+    </div>
+    <button id="speedButton">Velocità</button>
+    <button id="playButton">Play</button>
+    <button id="restartButton">Restart</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const spaceship = document.getElementById('spaceship');
+            const container = document.querySelector('.container');
+            const gameOverMessage = document.getElementById('gameOverMessage');
+            const livesContainer = document.getElementById('livesContainer');
+            const lifeCount = document.getElementById('lifeCount');
+            const pointsElement = document.getElementById('points');
+            const timerElement = document.getElementById('timer');
+            const speedButton = document.getElementById('speedButton');
+            const playButton = document.getElementById('playButton');
+            const restartButton = document.getElementById('restartButton');
+            let gameActive = false;
+            let lives = 3;
+            let points = 0;  // Inizializzazione della variabile punti
+            let spaceshipPosition = {
+                left: container.clientWidth / 2 - spaceship.clientWidth / 2,
+                top: container.clientHeight * 0.95 - spaceship.clientHeight / 2
+            };
+            let stepSize = 10;
+            let rockSpeed = 2; // Inizializzazione della velocità dei sassi
+            let specialRockSpeed = 4.2; // Inizializzazione della velocità dei sassi speciali (reduced by 30%)
+            let bonusRockSpeed = 2.5; // Inizializzazione della velocità dei buoni
+            let heartSpeed = 2.2; // Inizializzazione della velocità dei cuori
+            let gameTime = 0; // Inizializzazione del timer
+            const keysPressed = {}; // Oggetto per tenere traccia dei tasti premuti
+
+            function moveSpaceship() {
+                spaceship.style.left = `${spaceshipPosition.left}px`;
+                spaceship.style.top = `${spaceshipPosition.top}px`;
+            }
+
+            document.addEventListener('keydown', (event) => {
+                if (!gameActive) return;
+                keysPressed[event.key] = true;
+                updateSpaceshipPosition();
+
+                if (event.key === 'a') {
+                    event.preventDefault();
+                    triggerSpeedBoost();
+                }
+            });
+
+            document.addEventListener('keyup', (event) => {
+                keysPressed[event.key] = false;
+            });
+
+            function updateSpaceshipPosition() {
+                if (keysPressed['ArrowLeft'] && spaceshipPosition.left > 0) {
+                    spaceshipPosition.left -= stepSize;
+                }
+                if (keysPressed['ArrowRight'] && spaceshipPosition.left < container.clientWidth - spaceship.clientWidth) {
+                    spaceshipPosition.left += stepSize;
+                }
+                if (keysPressed['ArrowUp'] && spaceshipPosition.top > 0) {
+                    spaceshipPosition.top -= stepSize;
+                }
+                if (keysPressed['ArrowDown'] && spaceshipPosition.top < container.clientHeight - spaceship.clientHeight) {
+                    spaceshipPosition.top += stepSize;
+                }
+                moveSpaceship();
+            }
+
+            function createRock() {
+                if (!gameActive) return;
+
+                const rock = document.createElement('div');
+                rock.className = 'rock';
+                rock.style.left = `${Math.random() * (container.clientWidth - 50)}px`; // Adjusted to fit the width
+                container.appendChild(rock);
+
+                let rockTop = 0;
+                function dropRock() {
+                    if (!gameActive) return;
+
+                    if (rockTop < container.clientHeight) {
+                        rockTop += rockSpeed;
+                        rock.style.top = `${rockTop}px`;
+
+                        if (rockTop >= container.clientHeight) {
+                            points += 2;
+                            pointsElement.textContent = points;
+                        }
+
+                        if (checkCollision(spaceship, rock)) {
+                            rock.remove();
+                            loseLife();
+                            return;
+                        }
+
+                        requestAnimationFrame(dropRock);
+                    } else {
+                        rock.remove();
+                    }
+                }
+                dropRock();
+            }
+
+            function createSpecialRock() {
+                if (!gameActive || gameTime < 50) return;
+                console.log("Creating special rock at gameTime:", gameTime);
+
+                const specialRock = document.createElement('div');
+                specialRock.className = 'special-rock';
+                specialRock.style.left = `${Math.random() * (container.clientWidth - 50)}px`; // Adjusted to fit the width
+                container.appendChild(specialRock);
+
+                let specialRockTop = 0;
+                function dropSpecialRock() {
+                    if (!gameActive) return;
+
+                    if (specialRockTop < container.clientHeight) {
+                        specialRockTop += specialRockSpeed;
+                        specialRock.style.top = `${specialRockTop}px`;
+
+                        if (specialRockTop >= container.clientHeight) {
+                            points += 5; // Points for special rock
+                            pointsElement.textContent = points;
+                        }
+
+                        if (checkCollision(spaceship, specialRock)) {
+                            specialRock.remove();
+                            loseLife();
+                            return;
+                        }
+
+                        requestAnimationFrame(dropSpecialRock);
+                    } else {
+                        specialRock.remove();
+                    }
+                }
+                dropSpecialRock();
+            }
+
+            function createBonusRock() {
+                if (!gameActive || gameTime < 50) return;
+                console.log("Creating bonus rock at gameTime:", gameTime);
+
+                const bonusRock = document.createElement('div');
+                bonusRock.className = 'bonus-rock';
+                bonusRock.style.left = `${Math.random() * (container.clientWidth - 50)}px`; // Adjusted to fit the width
+                container.appendChild(bonusRock);
+
+                let bonusRockTop = 0;
+                function dropBonusRock() {
+                    if (!gameActive) return;
+
+                    if (bonusRockTop < container.clientHeight) {
+                        bonusRockTop += bonusRockSpeed;
+                        bonusRock.style.top = `${bonusRockTop}px`;
+
+                        if (bonusRockTop >= container.clientHeight) {
+                            bonusRock.remove();
+                        }
+
+                        if (checkCollision(spaceship, bonusRock)) {
+                            bonusRock.remove();
+                            points += 50; // Points for bonus rock
+                            pointsElement.textContent = points;
+                            return;
+                        }
+
+                        requestAnimationFrame(dropBonusRock);
+                    } else {
+                        bonusRock.remove();
+                    }
+                }
+                dropBonusRock();
+            }
+
+            function createHeart() {
+                if (!gameActive || gameTime < 30) return; // Hearts appear less frequently and only after 30 seconds
+                console.log("Creating heart at gameTime:", gameTime);
+
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.style.left = `${Math.random() * (container.clientWidth - 50)}px`; // Adjusted to fit the width
+                container.appendChild(heart);
+
+                let heartTop = 0;
+                function dropHeart() {
+                    if (!gameActive) return;
+
+                    if (heartTop < container.clientHeight) {
+                        heartTop += heartSpeed;
+                        heart.style.top = `${heartTop}px`;
+
+                        if (heartTop >= container.clientHeight) {
+                            heart.remove();
+                        }
+
+                        if (checkCollision(spaceship, heart)) {
+                            heart.remove();
+                            lives++;
+                            lifeCount.textContent = lives;
+                            return;
+                        }
+
+                        requestAnimationFrame(dropHeart);
+                    } else {
+                        heart.remove();
+                    }
+                }
+                dropHeart();
+            }
+
+            function createTrioRocks() {
+                if (!gameActive) return;
+
+                const positions = [Math.random() * (container.clientWidth - 50), Math.random() * (container.clientWidth - 50), Math.random() * (container.clientWidth - 50)];
+
+                positions.forEach(pos => {
+                    const trioRock = document.createElement('div');
+                    trioRock.className = 'trio-rock';
+                    trioRock.style.left = `${pos}px`; // Adjusted to fit the width
+                    container.appendChild(trioRock);
+
+                    let trioRockTop = 0;
+                    function dropTrioRock() {
+                        if (!gameActive) return;
+
+                        if (trioRockTop < container.clientHeight) {
+                            trioRockTop += rockSpeed;
+                            trioRock.style.top = `${trioRockTop}px`;
+
+                            if (trioRockTop >= container.clientHeight) {
+                                trioRock.remove();
+                            }
+
+                            if (checkCollision(spaceship, trioRock)) {
+                                trioRock.remove();
+                                loseLife();
+                                return;
+                            }
+
+                            requestAnimationFrame(dropTrioRock);
+                        } else {
+                            trioRock.remove();
+                        }
+                    }
+                    dropTrioRock();
+                });
+            }
+
+            function checkCollision(spaceship, rock) {
+                const spaceshipRect = spaceship.getBoundingClientRect();
+                const rockRect = rock.getBoundingClientRect();
+
+                return !(
+                    spaceshipRect.top > rockRect.bottom ||
+                    spaceshipRect.bottom < rockRect.top ||
+                    spaceshipRect.left > rockRect.right ||
+                    spaceshipRect.right < rockRect.left
+                );
+            }
+
+            function loseLife() {
+                lives--;
+                lifeCount.textContent = lives;
+                if (lives === 0) {
+                    gameActive = false;
+                    gameOverMessage.style.display = 'block';
+                    playButton.style.display = 'none';
+                    restartButton.style.display = 'inline-block'; // Show restart button
+                }
+            }
+
+            function createMultipleRocks() {
+                if (!gameActive) return;
+                createRock();
+                if (Math.random() < 0.3) createRock(); // 30% chance to create an additional rock
+            }
+
+            setInterval(() => {
+                if (gameActive) createMultipleRocks();
+            }, 1000);
+
+            setInterval(() => {
+                if (gameActive) createSpecialRock();
+            }, 3600); // Reduced frequency for special rocks (20% less frequent)
+
+            setInterval(() => {
+                if (gameActive) createBonusRock();
+            }, 6000); // Frequency for bonus rocks
+
+            setInterval(() => {
+                if (gameActive) createHeart();
+            }, 15000); // Frequency for hearts (less frequent than special rocks)
+
+            setInterval(() => {
+                if (gameActive) createTrioRocks();
+            }, 7000); // Frequency for trio rocks
+
+            moveSpaceship();
+
+            speedButton.addEventListener('click', triggerSpeedBoost);
+
+            function triggerSpeedBoost() {
+                if (points >= 10) {
+                    stepSize *= 1.1; // Incrementa la velocità del 10%
+                    points -= 10; // Decrementa di 10 punti
+                    pointsElement.textContent = points; // Aggiorna il display
+                }
+            }
+
+            // Funzione per incrementare la velocità di caduta dei sassi ogni 20 secondi
+            setInterval(() => {
+                if (gameActive) rockSpeed *= 1.5; // Incrementa la velocità del 50%
+            }, 20000); // Ogni 20 secondi
+
+            // Funzione per incrementare la velocità di caduta dei sassi speciali ogni 50 secondi
+            setInterval(() => {
+                if (gameActive) specialRockSpeed *= 1.4; // Incrementa la velocità del 40%
+            }, 50000); // Ogni 50 secondi
+
+            // Funzione per aggiornare il timer
+            setInterval(() => {
+                if (gameActive) {
+                    gameTime++;
+                    timerElement.textContent = gameTime;
+                    console.log("Game Time:", gameTime);
+                }
+            }, 1000); // Aggiorna il timer ogni secondo
+
+            playButton.addEventListener('click', () => {
+                gameActive = true;
+                playButton.style.display = 'none';
+            });
+
+            restartButton.addEventListener('click', () => {
+                location.reload(); // Reload the page to completely restart the game
+            });
+        });
+    </script>
+</body>
+</html>
